@@ -1,8 +1,8 @@
-// need get notes when clicked
-
 const express = require('express');
 const path = require('path');
-const notes = require('./db/db.json')
+const notes = require('./db/db.json');
+const uuid = require('./helpers/uuid');
+const fs = require('fs');
 
 const PORT = process.env.PORT || 3001;
 
@@ -24,32 +24,43 @@ app.get('/api/notes', (req, res) => {
 
 
 // NOTE: Data persistence isn't set up yet, so this will only exist in memory until we implement it
-app.post('/api/reviews', (req, res) => {
+app.post('/api/notes', (req, res) => {
   // Log that a POST request was received
-  console.info(`${req.method} request received to add a review`);
+  console.info(`${req.method} request received to add a note`);
 
   // Destructuring assignment for the items in req.body
-  const { product, review, username } = req.body;
+  const { title, text } = req.body;
 
   // If all the required properties are present
-  if (product && review && username) {
+  if (title && text) {
     // Variable for the object we will save
-    const newReview = {
-      product,
-      review,
-      username,
-      review_id: uuid(),
+    const newNote = {
+      title,
+      text,
+      id: uuid(),
     };
+
+    notes.push(newNote);
+
+        // Write updated notes back to the file
+        fs.writeFile(
+          './db/db.json',
+          JSON.stringify(notes, null, 4),
+          (writeErr) =>
+            writeErr
+              ? console.error(writeErr)
+              : console.info('Successfully updated notes!')
+        );
 
     const response = {
       status: 'success',
-      body: newReview,
+      body: newNote,
     };
 
     console.log(response);
     res.status(201).json(response);
   } else {
-    res.status(500).json('Error in posting review');
+    res.status(500).json('Error in posting note');
   }
 });
 
